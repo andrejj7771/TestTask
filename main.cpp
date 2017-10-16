@@ -11,15 +11,15 @@
 
 using namespace std;
 
-WORD read_word(int fd){
-    unsigned char byte_1[1];
-    unsigned char byte_2[1];
+struct bmpheader{
+    WORD bfType;
+    DWORD bfSize;
+    WORD bfReserved1;
+    WORD bfReserved2;
+    DWORD bfOffBits;
+};
 
-    read(fd, byte_1, 1);
-    read(fd, byte_2, 1);
 
-    return ((byte_1[0] << 8) | byte_2[0]);
-}
 DWORD read_dword(int fd){
     unsigned char byte_1[1] = {0};
     unsigned char byte_2[1] = {0};
@@ -33,19 +33,39 @@ DWORD read_dword(int fd){
 
    return ((((((byte_4[0] << 8) | byte_3[0]) << 8) | byte_2[0]) << 8) | byte_1[0]);
 }
+WORD read_word(int fd){
+    unsigned char byte_1[1];
+    unsigned char byte_2[1];
+
+    read(fd, byte_1, 1);
+    read(fd, byte_2, 1);
+
+    return ((byte_1[0] << 8) | byte_2[0]);
+}
+
+bmpheader ReadHeader(int fd){
+    bmpheader res;
+    res.bfType = read_word(fd);
+    res.bfSize = read_dword(fd);
+    res.bfReserved1 = read_word(fd);
+    res.bfReserved2 = read_word(fd);
+    res.bfOffBits = read_dword(fd);
+    return res;
+}
+
 
 int main()
 {
     int fd = open("/home/andrey/img.bmp", O_RDWR);
-    char *buff = new char[1];
 
     if (fd == -1)
         perror("Open");
-    cout << hex << read_word(fd) << endl ;
-    cout << dec << read_dword(fd) << endl;
-    cout << read_word(fd) << endl ;
-    cout << read_word(fd) << endl ;
-    DWORD seek = read_dword(fd);
-    cout << seek << endl;
+
+    bmpheader imgHead = ReadHeader(fd);
+    cout << hex << imgHead.bfType << endl;
+    cout << dec << imgHead.bfSize << endl;
+    cout << imgHead.bfReserved1 << endl;
+    cout << imgHead.bfReserved2 << endl;
+    cout << imgHead.bfOffBits << endl;
     return 0;
 }
