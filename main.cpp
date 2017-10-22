@@ -42,12 +42,13 @@ struct color{
 
 color read_color(int fd);
 
-u_int8_t getHeight(int fd);
-u_int8_t getWidth(int fd);
+WORD getHeight(int fd);
+WORD getWidth(int fd);
 
-void writeY(u_int8_t **frame, color *color_mas, int iWidth, int iHeight, int vWidth, int ind);
-void writeU(u_int8_t **frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight, int ind);
-void writeV(u_int8_t **frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight, int ind);
+void writeY(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth);
+void writeU(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight);
+void writeV(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight);
+void writeFrames(u_int8_t **frames, color *color_mas, int frame_count, int iWidth, int iHeight, int vWidth, int vHeight);
 
 /*GL funtions*/
 void Display();
@@ -74,8 +75,8 @@ int main(int argc, char **argv){
     bmpHeader imgHead;
     imgHead.ReadHeader(fd);
 
-    u_int16_t width = getWidth(fd);
-    u_int16_t height = getHeight(fd);
+    WORD width = getWidth(fd);
+    WORD height = getHeight(fd);
 
     lseek(fd, imgHead.bfOffBits, SEEK_SET);
     color *color_mas = new color[width * height];
@@ -103,15 +104,17 @@ int main(int argc, char **argv){
     float start = clock();
     for (int i = 0; i < frame_count; i++){
         read(fd, frame[i], frame_size);
-
-        writeY(frame, color_mas, width, height, vWidth, i);
-        writeU(frame, color_mas, width, height, vWidth, vHeight, i);
-        writeV(frame, color_mas, width, height, vWidth, vHeight, i);
     }
-    cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000) / 1000 << endl;
     close(fd);
 
-    fd = open(videoOutput.c_str(), O_RDWR | O_CREAT); //open output video
+    thread wFrames(writeFrames, ref(frame), ref(color_mas), frame_count, width, height, vWidth, vHeight);
+    //writeFrames(frame, color_mas, frame_count, width, height, vWidth, vHeight);
+
+    if (wFrames.joinable())
+        wFrames.join();
+    cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000) / 1000 << endl;
+
+    fd = open(videoOutput.c_str(), O_RDWR | O_CREAT); //open/create output video
     if (fd == -1)
         perror("open");
     for (int i = 0; i < frame_count; i++)
@@ -119,7 +122,7 @@ int main(int argc, char **argv){
     close(fd);
 
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowSize(vWidth, vHeight);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Video");
@@ -129,6 +132,7 @@ int main(int argc, char **argv){
     gluOrtho2D(0, vWidth, 0, vHeight);
     glutDisplayFunc(Display);
     glutMainLoop();
+
 
     for (int i = 0; i < frame_count; i++)
         delete[]frame[i];
@@ -172,48 +176,54 @@ color read_color(int fd){
     return res_color;
 }
 
-void writeY (u_int8_t **frame, color *color_mas, int iWidth, int iHeight, int vWidth, int ind){
+void writeY (u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth){
     int f_c = 0;
     for (int i = iHeight - 1; i > -1; i--){
         for (int j = i * iWidth; j < (i + 1) * iWidth; j++){
             u_int8_t Y = ((66 * color_mas[j].Red + 129 * color_mas[j].Green + 25 * color_mas[j].Blue + 128) >> 8) + 16;
-            frame[ind][f_c++] = Y;
+            frame[f_c++] = Y;
         }
         f_c += (vWidth - iWidth);
     }
 }
-void writeU(u_int8_t **frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight, int ind){
+void writeU(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight){
     int f_c = vWidth * vHeight + 1;
     for (int y = iHeight - 1; y > -1; y -= 2){
         for (int x = 0; x < iWidth; x += 2){
             int i = y * iWidth + x;
             u_int8_t U = ((-38 * color_mas[i].Red - 74 * color_mas[i].Green + 112 * color_mas[i].Blue + 128) >> 8) + 128;
-            frame[ind][f_c++] = U;
+            frame[f_c++] = U;
         }
         f_c += (vWidth - iWidth) / 2;
     }
 }
-void writeV(u_int8_t **frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight, int ind){
+void writeV(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight){
     int f_c = vWidth * vHeight + (vWidth * vHeight / 4) + 1;
     for (int y = iHeight - 1; y > -1; y -= 2){
         for (int x = 0; x < iWidth; x += 2){
             int i = y * iWidth + x;
             u_int8_t V = ((112 * color_mas[i].Red - 94 * color_mas[i].Green - 18 * color_mas[i].Blue + 128) >> 8) + 128;
-            frame[ind][f_c++] = V;
+            frame[f_c++] = V;
         }
         f_c += (vWidth - iWidth) / 2;
     }
 }
+void writeFrames(u_int8_t **frame, color *color_mas, int frame_count, int iWidth, int iHeight, int vWidth, int vHeight){
+    for (int i = 0; i < frame_count; i++){
+        writeY(frame[i], color_mas, iWidth, iHeight, vWidth);
+        writeU(frame[i], color_mas, iWidth, iHeight, vWidth, vHeight);
+        writeV(frame[i], color_mas, iWidth, iHeight, vWidth, vHeight);
+    }
+}
 
-u_int8_t getWidth(int fd){
+WORD getWidth(int fd){
     lseek(fd, 18, SEEK_SET);
     return read_dword(fd);
 }
-u_int8_t getHeight(int fd){
+WORD getHeight(int fd){
     lseek(fd, 22, SEEK_SET);
     return read_dword(fd);
 }
-
 void Display(){
     glEnable(GL_TEXTURE_2D);
     for (int i = 0; i < 300; i++){
@@ -223,13 +233,14 @@ void Display(){
         delFrame(texture);
 
         glutSwapBuffers();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30)); //30 fps
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
     }
     glutSwapBuffers();
 }
 GLint loadFrame(u_int8_t *frame, int w, int h){
     GLuint texture;
     u_int8_t *imageData = new u_int8_t[w * h * 3];
+    int *imageData2 = new int[w * h * 3];
 
     u_int8_t *Y = new u_int8_t[w * h];
     u_int8_t *U = new u_int8_t[w * h / 4];
@@ -238,35 +249,89 @@ GLint loadFrame(u_int8_t *frame, int w, int h){
     for (int i = 0; i < w * h; i++)
         Y[i] = frame[i];
 
-    for (int i = w * h + 1; i < (w * h) + (w * h / 4); i++)
-        U[i - (w * h + 1)] = frame[i];
+    int offset = (w * h) + (w * h / 4);
+    for (int i = w * h; i < offset; i++)
+        U[i - (w * h)] = frame[i];
 
-    int offset = (w * h) + (w * h / 4) + 1;
-    for (int i = offset; i < (w * h) + (w * h / 2); i++)
+    for (int i = offset; i < offset + (w * h / 4); i++)
         V[i - offset] = frame[i];
 
-    for (int i = h * w * 3 - 1; i > -1; i -= w * 3){
-        for (int j = 0; j < w * 3; j += 3, Y++){
-            imageData[i + j] = (*Y);
-            imageData[i + j + 1] = (*Y);
-            imageData[i + j + 2] = (*Y);
+
+    for (int i = (w * 3)*(h - 1); i >= 0; i -= w * 3){
+        for (int j = 0; j < w; j++, Y++){
+            imageData2[i + 3 * j] =  (*Y - 16);             //R
+            imageData2[i + 3 * j + 1] = (*Y - 16);        //G
+            imageData2[i + 3 * j + 2] = (*Y - 16);        //B
         }
     }
+
+    for (int i = (h * w * 3) - (w * 3 * 2); i >= 0; i -= w * 3 * 2){
+        for (int j = 0; j < w; j++){
+            if (j != 0 && j % 2){
+                V++;
+                U++;
+            }
+            imageData2[i + 3 * j] += 1.370705 * (*V - 128);                                           //R
+            if (imageData2[i + 3 * j] < 0)
+                imageData2[i + 3 * j] = 0;
+            if (imageData2[i + 3 * j] > 255)
+                imageData2[i + 3 * j] = 255;
+            imageData[i + 3 * j] = (u_int8_t)imageData2[i + 3 * j] * 220 / 256;
+
+            imageData2[i + 3 * j + 1] -= 0.698001 * (*U - 128) - 0.337633 * (*V - 128) + 10;                 //G
+            if (imageData2[i + 3 * j + 1] < 0)
+                imageData2[i + 3 * j + 1] = 0;
+            if (imageData2[i + 3 * j + 1] > 255)
+                imageData2[i + 3 * j + 1] = 255;
+            imageData[i + 3 * j + 1] = (u_int8_t)imageData2[i + 3 * j + 1] * 220 / 256;
+
+            imageData2[i + 3 * j + 2] += 1.732446 * (*U - 128);                                       //B
+            if (imageData2[i + 3 * j + 2] < 0)
+                imageData2[i + 3 * j + 2] = 0;
+            if (imageData2[i + 3 * j + 2] > 255)
+                imageData2[i + 3 * j + 2] = 255;
+            imageData[i + 3 * j + 2] = (u_int8_t)imageData2[i + 3 * j + 2] * 220 / 256;
+
+            /*---------------------------------------------------------------------------------------------*/
+
+            imageData2[i + 3 * (j + w)] += 1.370705 * (*V - 128);                                     //R
+            if (imageData2[i + 3 * (j + w)] < 0)
+                imageData2[i + 3 * (j + w)] = 0;
+            if (imageData2[i + 3 * (j + w)] > 255)
+                imageData2[i + 3 * (j + w)] = 255;
+            imageData[i + 3 * (j + w)] = (u_int8_t)imageData2[i + 3 * (j + w)] * 220 / 256;
+
+            imageData2[i + 3 * (j + w) + 1] -= 0.698001 * (*U - 128) - 0.337633 * (*V - 128) + 10;           //G
+            if (imageData2[i + 3 * (j + w) + 1] < 0)
+                imageData2[i + 3 * (j + w) + 1] = 0;
+            if (imageData2[i + 3 * (j + w) + 1] > 255)
+                imageData2[i + 3 * (j + w) + 1] = 255;
+            imageData[i + 3 * (j + w) + 1] = (u_int8_t)imageData2[i + 3 * (j + w) + 1] * 220 / 256;
+
+            imageData2[i + 3 * (j + w) + 2] += 1.732446 * (*U - 128);                                 //B
+            if (imageData2[i + 3 * (j + w) + 2] < 0)
+                imageData2[i + 3 * (j + w) + 2] = 0;
+            if (imageData2[i + 3 * (j + w) + 2] > 255)
+                imageData2[i + 3 * (j + w) + 2] = 255;
+            imageData[i + 3 * (j + w) + 2] = (u_int8_t)imageData2[i + 3 * (j + w) + 2] * 220 / 256;
+
+        }
+    }
+
+
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_LINEAR);
 
-    //even better quality, but this will do for now.
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR );
 
-
-    //to the edge of our shape.
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE,  imageData);
+
 
     return texture;
 }
@@ -274,7 +339,6 @@ GLint loadFrame(u_int8_t *frame, int w, int h){
 void delFrame(GLuint texture){
     glDeleteTextures(1, &texture);
 }
-
 void drawFrame(){
     glBindTexture(GL_TEXTURE_2D, texture);
 
