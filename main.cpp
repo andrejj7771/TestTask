@@ -49,6 +49,8 @@ void writeY(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWid
 void writeU(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight);
 void writeV(u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth, int vHeight);
 void writeFrames(u_int8_t **frames, color *color_mas, int frame_count, int iWidth, int iHeight, int vWidth, int vHeight);
+u_int8_t *RGBVideo(u_int8_t *Y, u_int8_t *U, u_int8_t *V, WORD w, WORD h);
+u_int8_t *colorVideo(int *tmp, u_int8_t *U, u_int8_t *V, WORD w, WORD h);
 
 /*GL funtions*/
 void Display();
@@ -239,8 +241,6 @@ void Display(){
 }
 GLint loadFrame(u_int8_t *frame, int w, int h){
     GLuint texture;
-    u_int8_t *imageData = new u_int8_t[w * h * 3];
-    int *imageData2 = new int[w * h * 3];
 
     u_int8_t *Y = new u_int8_t[w * h];
     u_int8_t *U = new u_int8_t[w * h / 4];
@@ -256,70 +256,6 @@ GLint loadFrame(u_int8_t *frame, int w, int h){
     for (int i = offset; i < offset + (w * h / 4); i++)
         V[i - offset] = frame[i];
 
-
-    for (int i = (w * 3)*(h - 1); i >= 0; i -= w * 3){
-        for (int j = 0; j < w; j++, Y++){
-            imageData2[i + 3 * j] =  (*Y - 16);             //R
-            imageData2[i + 3 * j + 1] = (*Y - 16);        //G
-            imageData2[i + 3 * j + 2] = (*Y - 16);        //B
-        }
-    }
-
-    for (int i = (h * w * 3) - (w * 3 * 2); i >= 0; i -= w * 3 * 2){
-        for (int j = 0; j < w; j++){
-            if (j != 0 && j % 2){
-                V++;
-                U++;
-            }
-            imageData2[i + 3 * j] += 1.370705 * (*V - 128);                                           //R
-            if (imageData2[i + 3 * j] < 0)
-                imageData2[i + 3 * j] = 0;
-            if (imageData2[i + 3 * j] > 255)
-                imageData2[i + 3 * j] = 255;
-            imageData[i + 3 * j] = (u_int8_t)imageData2[i + 3 * j] * 220 / 256;
-
-            imageData2[i + 3 * j + 1] -= 0.698001 * (*U - 128) - 0.337633 * (*V - 128) + 10;                 //G
-            if (imageData2[i + 3 * j + 1] < 0)
-                imageData2[i + 3 * j + 1] = 0;
-            if (imageData2[i + 3 * j + 1] > 255)
-                imageData2[i + 3 * j + 1] = 255;
-            imageData[i + 3 * j + 1] = (u_int8_t)imageData2[i + 3 * j + 1] * 220 / 256;
-
-            imageData2[i + 3 * j + 2] += 1.732446 * (*U - 128);                                       //B
-            if (imageData2[i + 3 * j + 2] < 0)
-                imageData2[i + 3 * j + 2] = 0;
-            if (imageData2[i + 3 * j + 2] > 255)
-                imageData2[i + 3 * j + 2] = 255;
-            imageData[i + 3 * j + 2] = (u_int8_t)imageData2[i + 3 * j + 2] * 220 / 256;
-
-            /*---------------------------------------------------------------------------------------------*/
-
-            imageData2[i + 3 * (j + w)] += 1.370705 * (*V - 128);                                     //R
-            if (imageData2[i + 3 * (j + w)] < 0)
-                imageData2[i + 3 * (j + w)] = 0;
-            if (imageData2[i + 3 * (j + w)] > 255)
-                imageData2[i + 3 * (j + w)] = 255;
-            imageData[i + 3 * (j + w)] = (u_int8_t)imageData2[i + 3 * (j + w)] * 220 / 256;
-
-            imageData2[i + 3 * (j + w) + 1] -= 0.698001 * (*U - 128) - 0.337633 * (*V - 128) + 10;           //G
-            if (imageData2[i + 3 * (j + w) + 1] < 0)
-                imageData2[i + 3 * (j + w) + 1] = 0;
-            if (imageData2[i + 3 * (j + w) + 1] > 255)
-                imageData2[i + 3 * (j + w) + 1] = 255;
-            imageData[i + 3 * (j + w) + 1] = (u_int8_t)imageData2[i + 3 * (j + w) + 1] * 220 / 256;
-
-            imageData2[i + 3 * (j + w) + 2] += 1.732446 * (*U - 128);                                 //B
-            if (imageData2[i + 3 * (j + w) + 2] < 0)
-                imageData2[i + 3 * (j + w) + 2] = 0;
-            if (imageData2[i + 3 * (j + w) + 2] > 255)
-                imageData2[i + 3 * (j + w) + 2] = 255;
-            imageData[i + 3 * (j + w) + 2] = (u_int8_t)imageData2[i + 3 * (j + w) + 2] * 220 / 256;
-
-        }
-    }
-
-
-
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_LINEAR);
@@ -330,10 +266,79 @@ GLint loadFrame(u_int8_t *frame, int w, int h){
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE,  imageData);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE,  RGBVideo(Y, U, V, w, h));
 
     return texture;
+}
+
+u_int8_t *RGBVideo(u_int8_t *Y, u_int8_t *U, u_int8_t *V, WORD w, WORD h){
+    int *tmp = new int[w * h * 3];
+
+    for (int i = (w * 3)*(h - 1); i >= 0; i -= w * 3){
+        for (int j = 0; j < w; j++, Y++){
+            tmp[i + 3 * j] =  (*Y - 16);             //R
+            tmp[i + 3 * j + 1] = (*Y - 16);        //G
+            tmp[i + 3 * j + 2] = (*Y - 16);        //B
+        }
+    }
+    return colorVideo(tmp, U, V, w, h);
+
+}
+u_int8_t *colorVideo(int *tmp, u_int8_t *U, u_int8_t *V, WORD w, WORD h){
+    u_int8_t *imageData = new u_int8_t[w * h * 3];
+    for (int i = (h * w * 3) - (w * 3 * 2); i >= 0; i -= w * 3 * 2){
+        for (int j = 0; j < w; j++){
+            if (j != 0 && j % 2){
+                V++;
+                U++;
+            }
+            tmp[i + 3 * j] += 1.370705 * (*V - 128);                                         //R
+            if (tmp[i + 3 * j] < 0)
+                tmp[i + 3 * j] = 0;
+            if (tmp[i + 3 * j] > 255)
+                tmp[i + 3 * j] = 255;
+            imageData[i + 3 * j] = (u_int8_t)tmp[i + 3 * j] * 220 / 256;
+
+            tmp[i + 3 * j + 1] -= 0.698001 * (*U - 128) - 0.337633 * (*V - 128) + 10;        //G
+            if (tmp[i + 3 * j + 1] < 0)
+                tmp[i + 3 * j + 1] = 0;
+            if (tmp[i + 3 * j + 1] > 255)
+                tmp[i + 3 * j + 1] = 255;
+            imageData[i + 3 * j + 1] = (u_int8_t)tmp[i + 3 * j + 1] * 220 / 256;
+
+            tmp[i + 3 * j + 2] += 1.732446 * (*U - 128);                                     //B
+            if (tmp[i + 3 * j + 2] < 0)
+                tmp[i + 3 * j + 2] = 0;
+            if (tmp[i + 3 * j + 2] > 255)
+                tmp[i + 3 * j + 2] = 255;
+            imageData[i + 3 * j + 2] = (u_int8_t)tmp[i + 3 * j + 2] * 220 / 256;
+
+            /*---------------------------------------------------------------------------------------------*/
+
+            tmp[i + 3 * (j + w)] += 1.370705 * (*V - 128);                                   //R
+            if (tmp[i + 3 * (j + w)] < 0)
+                tmp[i + 3 * (j + w)] = 0;
+            if (tmp[i + 3 * (j + w)] > 255)
+                tmp[i + 3 * (j + w)] = 255;
+            imageData[i + 3 * (j + w)] = (u_int8_t)tmp[i + 3 * (j + w)] * 220 / 256;
+
+            tmp[i + 3 * (j + w) + 1] -= 0.698001 * (*U - 128) - 0.337633 * (*V - 128) + 10;  //G
+            if (tmp[i + 3 * (j + w) + 1] < 0)
+                tmp[i + 3 * (j + w) + 1] = 0;
+            if (tmp[i + 3 * (j + w) + 1] > 255)
+                tmp[i + 3 * (j + w) + 1] = 255;
+            imageData[i + 3 * (j + w) + 1] = (u_int8_t)tmp[i + 3 * (j + w) + 1] * 220 / 256;
+
+            tmp[i + 3 * (j + w) + 2] += 1.732446 * (*U - 128);                               //B
+            if (tmp[i + 3 * (j + w) + 2] < 0)
+                tmp[i + 3 * (j + w) + 2] = 0;
+            if (tmp[i + 3 * (j + w) + 2] > 255)
+                tmp[i + 3 * (j + w) + 2] = 255;
+            imageData[i + 3 * (j + w) + 2] = (u_int8_t)tmp[i + 3 * (j + w) + 2] * 220 / 256;
+
+        }
+    }
+    return imageData;
 }
 
 void delFrame(GLuint texture){
