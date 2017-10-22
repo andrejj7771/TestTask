@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
-
+#include <pwd.h>
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <thread>
@@ -19,6 +19,7 @@ using namespace std;
 DWORD   read_dword(int fd);
 WORD    read_word(int fd);
 
+//BMP header structure
 struct bmpHeader{
     WORD bfType = 0;
     DWORD bfSize = 0;
@@ -60,11 +61,14 @@ void drawFrame();
 
 GLint texture = 0;
 u_int8_t **frame;
-int main(int argc, char **argv){
-    string imgInput = "/home/andrey/nokia.bmp";
-    string videoInput = "/home/andrey/input.yuv";
-    string videoOutput = "/home/andrey/output.yuv";
 
+/*Main Function*/
+int main(int argc, char **argv){
+    struct passwd *pw = getpwuid(getuid());
+
+    string imgInput = pw->pw_dir; imgInput += "/TestTask/files/image.bmp";
+    string videoInput = pw->pw_dir; videoInput += "/TestTask/files/input.yuv";
+    string videoOutput = pw->pw_dir; videoOutput += "/TestTask/files/output.yuv";
     int vWidth = 352;
     int vHeight = 288;
 
@@ -103,18 +107,19 @@ int main(int argc, char **argv){
     for (int i = 0; i < frame_count; i++)
         frame[i] = new u_int8_t[frame_size];
 
-    float start = clock();
-    for (int i = 0; i < frame_count; i++){
+    for (int i = 0; i < frame_count; i++){ //get every video frame
         read(fd, frame[i], frame_size);
     }
     close(fd);
 
+    float start = clock();
+    //merge image and video
     thread wFrames(writeFrames, ref(frame), ref(color_mas), frame_count, width, height, vWidth, vHeight);
     //writeFrames(frame, color_mas, frame_count, width, height, vWidth, vHeight);
 
     if (wFrames.joinable())
         wFrames.join();
-    cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000) / 1000 << endl;
+    cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000) / 1000 << endl; //time of merger
 
     fd = open(videoOutput.c_str(), O_RDWR | O_CREAT); //open/create output video
     if (fd == -1)
@@ -123,7 +128,7 @@ int main(int argc, char **argv){
         write(fd, frame[i], frame_size);
     close(fd);
 
-    glutInit(&argc, argv);
+    glutInit(&argc, argv);                              //init oGL
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowSize(vWidth, vHeight);
     glutInitWindowPosition(100, 100);
@@ -136,14 +141,13 @@ int main(int argc, char **argv){
     glutMainLoop();
 
 
-    for (int i = 0; i < frame_count; i++)
+    for (int i = 0; i < frame_count; i++)               //free memory
         delete[]frame[i];
     delete[]frame;
     delete[]color_mas;
 
     return 0;
 }
-
 
 DWORD read_dword(int fd){
     u_int8_t byte_1 = 0;
@@ -178,6 +182,7 @@ color read_color(int fd){
     return res_color;
 }
 
+//merger functions
 void writeY (u_int8_t *frame, color *color_mas, int iWidth, int iHeight, int vWidth){
     int f_c = 0;
     for (int i = iHeight - 1; i > -1; i--){
@@ -218,6 +223,7 @@ void writeFrames(u_int8_t **frame, color *color_mas, int frame_count, int iWidth
     }
 }
 
+//get img size
 WORD getWidth(int fd){
     lseek(fd, 18, SEEK_SET);
     return read_dword(fd);
@@ -226,6 +232,8 @@ WORD getHeight(int fd){
     lseek(fd, 22, SEEK_SET);
     return read_dword(fd);
 }
+
+//oGL functions
 void Display(){
     glEnable(GL_TEXTURE_2D);
     for (int i = 0; i < 300; i++){
@@ -355,6 +363,5 @@ void drawFrame(){
         glTexCoord2d(0, 1); glVertex2d(0, 288);
     glEnd();
     glDisable(GL_TEXTURE_2D);
-
 }
 
