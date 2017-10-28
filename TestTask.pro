@@ -5,3 +5,6 @@ CONFIG -= qt
 
 SOURCES += main.cpp
 QMAKE_CFLAGS += -pthread
+
+HEADERS += \
+    image.h
