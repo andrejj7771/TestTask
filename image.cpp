@@ -44,7 +44,7 @@ uint8_t *rgb2yuv(uint32_t Width, uint32_t Height, uint8_t *bgrArr){
     }
     return yuvArr;
 }
-void rgb2yuv(uint32_t Width, uint8_t Height, uint32_t pHeight, uint32_t row, uint8_t *bgrArr, uint8_t *yuvArr){
+void rgb2yuvPart(uint32_t Width, uint8_t Height, uint32_t pHeight, uint32_t row, uint8_t *bgrArr, uint8_t *yuvArr){
     int y = Width * Height - Width * (row + 1);
     int u = Width * Height + Width * Height / 4 - (Width * (row + 1) / 4);
     int v = Width * Height + Width * Height / 2 - (Width * (row + 1) / 4);

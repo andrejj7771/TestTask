@@ -32,11 +32,24 @@ int main (){
     fclose(file);
 
     double start = clock();
-    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight / 4 - 1, bgrImage, yuvImage);
-    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight / 2 - 1, bgrImage, yuvImage);
-    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, 3 * imgHead.bfHeight / 4 - 1, bgrImage, yuvImage);
-    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight - 1, bgrImage, yuvImage);
+    std::thread th1(rgb2yuvPart, imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight / 4 - 1, std::ref(bgrImage), std::ref(yuvImage));
+    std::thread th2(rgb2yuvPart, imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight / 2 - 1, std::ref(bgrImage), std::ref(yuvImage));
+    std::thread th3(rgb2yuvPart, imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, 3 * imgHead.bfHeight / 4 - 1, std::ref(bgrImage), std::ref(yuvImage));
+    std::thread th4(rgb2yuvPart, imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight - 1, std::ref(bgrImage), std::ref(yuvImage));
     std::cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000000) / 1000000 << std::endl;
+
+    start = clock();
+    yuvImage = rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, bgrImage);
+    std::cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000000) / 1000000 << std::endl;
+
+    if (th1.joinable())
+        th1.join();
+    if (th2.joinable())
+        th2.join();
+    if (th3.joinable())
+        th3.join();
+    if (th4.joinable())
+        th4.join();
 
     if ((file = fopen(videoInput.c_str(), "r")) == NULL){
         perror("open");
