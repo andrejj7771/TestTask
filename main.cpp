@@ -1,9 +1,12 @@
 #include "image.h"
 
+#include <iostream>
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
 #include <thread>
+#include <ctime>
+#include <cmath>
 
 
 /*Main Function*/
@@ -28,7 +31,11 @@ int main (){
     fread(bgrImage, sizeof(uint8_t), imgHead.bfWidth * imgHead.bfHeight * 3, file);
     fclose(file);
 
-    yuvImage = rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, bgrImage);
+    double start = clock();
+    rgb2yuv(10, 8, 2, 7, bgrImage, yuvImage);
+    //yuvImage = rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, bgrImage);
+
+    std::cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000000) / 1000000 << std::endl;
 
     if ((file = fopen(videoInput.c_str(), "r")) == NULL){
         perror("open");
