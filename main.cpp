@@ -32,9 +32,10 @@ int main (){
     fclose(file);
 
     double start = clock();
-    rgb2yuv(10, 8, 2, 7, bgrImage, yuvImage);
-    //yuvImage = rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, bgrImage);
-
+    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight / 4 - 1, bgrImage, yuvImage);
+    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight / 2 - 1, bgrImage, yuvImage);
+    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, 3 * imgHead.bfHeight / 4 - 1, bgrImage, yuvImage);
+    rgb2yuv(imgHead.bfWidth, imgHead.bfHeight, imgHead.bfHeight / 4, imgHead.bfHeight - 1, bgrImage, yuvImage);
     std::cout << round(((clock() - start) / CLOCKS_PER_SEC) * 1000000) / 1000000 << std::endl;
 
     if ((file = fopen(videoInput.c_str(), "r")) == NULL){
@@ -45,7 +46,6 @@ int main (){
     int vWidth = 352;
     int vHeight = 288;
     int frameSize = vWidth * vHeight + vWidth * vHeight / 2;
-
     uint8_t *frame = new uint8_t[frameSize];
     while (!feof(file)) {
         if (fread(frame, sizeof(uint8_t), frameSize, file) == (size_t)frameSize){

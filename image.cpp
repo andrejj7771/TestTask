@@ -45,19 +45,12 @@ uint8_t *rgb2yuv(uint32_t Width, uint32_t Height, uint8_t *bgrArr){
     return yuvArr;
 }
 void rgb2yuv(uint32_t Width, uint8_t Height, uint32_t pHeight, uint32_t row, uint8_t *bgrArr, uint8_t *yuvArr){
-    int part = 0;
-    for (uint32_t i = 1; i <= Height / pHeight; i++)
-        if (row < pHeight * i && row >= pHeight * (i - 1)){
-            part = i;
-            i= Height / pHeight + 1;
-        }
     int y = Width * Height - Width * (row + 1);
-    int u = Width * Height + Width * Height / 4 - (Width / 2) * part;
-    int v = Width * Height + Width * Height / 2 - (Width / 2) * part;
+    int u = Width * Height + Width * Height / 4 - (Width * (row + 1) / 4);
+    int v = Width * Height + Width * Height / 2 - (Width * (row + 1) / 4);
     bool skiprowFlag = false;
-    int c = Width * row - 2 * Width;
-    for (uint32_t i = Width * row; i >= Width * row - 2 * Width; i -= Width){
-        for (uint32_t j = i; j < (i + Width); j++){
+    for (int i = Width * row; i >= int(Width * (row + 1) - pHeight * Width); i -= Width){
+        for (int j = i; j < (i + Width); j++){
             yuvArr[y++] = ((66 * bgrArr[3 * j + 2] + 129 * bgrArr[3 * j + 1] + 25 * bgrArr[3 * j] + 128) >> 8) + 16;
             if (j % 2 == 0){
                 if (skiprowFlag)
@@ -70,6 +63,11 @@ void rgb2yuv(uint32_t Width, uint8_t Height, uint32_t pHeight, uint32_t row, uin
             skiprowFlag = false;
         else skiprowFlag = true;
     }
+}
+bool saveYUV(char *path, uint8_t *yuvArr, uint32_t size){
+    FILE *f = fopen(path, "w");
+    fwrite(yuvArr, sizeof(uint8_t), size, f);
+    fclose(f);
 }
 
 //BMP header functions

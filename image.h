@@ -10,7 +10,7 @@ uint32_t read_dword(FILE* file);
 uint16_t read_word(FILE* file);
 uint8_t *rgb2yuv(uint32_t Width, uint32_t Height, uint8_t *bgrArr);
 void rgb2yuv(uint32_t Width, uint8_t Height, uint32_t pHeight, uint32_t row, uint8_t *bgrArr, uint8_t *yuvArr);
-
+bool saveYUV(char *path, uint8_t *yuvArr, uint32_t size);
 //BMP header structure
 struct bmpHeader{
     uint16_t bfType = 0;
