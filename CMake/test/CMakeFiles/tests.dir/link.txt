@@ -1,1 +1,0 @@
-/usr/bin/g++      CMakeFiles/tests.dir/test.cpp.o  -o tests ../libimage.a /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -lpthread 

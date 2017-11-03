@@ -1,9 +1,0 @@
-/home/andrey/TestTask/CMake/CMakeFiles/test.dir
-/home/andrey/TestTask/CMake/CMakeFiles/rebuild_cache.dir
-/home/andrey/TestTask/CMake/CMakeFiles/image.dir
-/home/andrey/TestTask/CMake/CMakeFiles/edit_cache.dir
-/home/andrey/TestTask/CMake/CMakeFiles/main.dir
-/home/andrey/TestTask/CMake/test/CMakeFiles/edit_cache.dir
-/home/andrey/TestTask/CMake/test/CMakeFiles/test.dir
-/home/andrey/TestTask/CMake/test/CMakeFiles/tests.dir
-/home/andrey/TestTask/CMake/test/CMakeFiles/rebuild_cache.dir
