@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/andrey/TestTask/image.h
+cstdint
+-
+cstdio
+-
+
+/home/andrey/TestTask/main.cpp
+image.h
+/home/andrey/TestTask/image.h
+iostream
+-
+cstdint
+-
+cstdlib
+-
+cstdio
+-
+thread
+-
+ctime
+-
+cmath
+-
+

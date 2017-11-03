@@ -1,0 +1,82 @@
+Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+Compiler: CMAKE_C_COMPILER-NOTFOUND 
+Build flags: 
+Id flags: 
+
+The output was:
+No such file or directory
+
+
+Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+Compiler: CMAKE_C_COMPILER-NOTFOUND 
+Build flags: 
+Id flags: -c
+
+The output was:
+No such file or directory
+
+
+Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+Compiler: CMAKE_C_COMPILER-NOTFOUND 
+Build flags: 
+Id flags: -Aa
+
+The output was:
+No such file or directory
+
+
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_3812e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_3812e.dir/build.make CMakeFiles/cmTC_3812e.dir/build
+make[1]: вход в каталог «/home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp»
+Building C object CMakeFiles/cmTC_3812e.dir/CheckSymbolExists.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_3812e.dir/CheckSymbolExists.c.o   -c /home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_3812e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3812e.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_3812e.dir/CheckSymbolExists.c.o  -o cmTC_3812e 
+CMakeFiles/cmTC_3812e.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x16): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_3812e.dir/build.make:97: ошибка выполнения рецепта для цели «cmTC_3812e»
+make[1]: *** [cmTC_3812e] Ошибка 1
+make[1]: выход из каталога «/home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp»
+Makefile:126: ошибка выполнения рецепта для цели «cmTC_3812e/fast»
+make: *** [cmTC_3812e/fast] Ошибка 2
+
+File /home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_64b6e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_64b6e.dir/build.make CMakeFiles/cmTC_64b6e.dir/build
+make[1]: вход в каталог «/home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp»
+Building C object CMakeFiles/cmTC_64b6e.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_64b6e.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_64b6e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_64b6e.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_64b6e.dir/CheckFunctionExists.c.o  -o cmTC_64b6e -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_64b6e.dir/build.make:97: ошибка выполнения рецепта для цели «cmTC_64b6e»
+make[1]: *** [cmTC_64b6e] Ошибка 1
+make[1]: выход из каталога «/home/andrey/TestTask/CMake/CMakeFiles/CMakeTmp»
+Makefile:126: ошибка выполнения рецепта для цели «cmTC_64b6e/fast»
+make: *** [cmTC_64b6e/fast] Ошибка 2
+
+
